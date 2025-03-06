@@ -1,7 +1,6 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 import rasterio as rio
 import os
 
@@ -104,11 +103,41 @@ folder_path = "/home/tague/classes/aiclass/RawData/"
 image_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.tiff')]
 square_size = 256
 
+def convert_to_numpy(image_paths):
+    """
+    Convert multiple images to a single master image with size (row, column, summation of all bands).
+    
+    Args:
+        image_paths: List of paths to the input images
+    
+    Returns:
+        Master image as a NumPy array
+    """
+    master_image = None
+    for image_path in image_paths:
+        with rio.open(image_path) as src:
+            img_raw = src.read()  # Read all bands
+            if src.count > 1:
+                img_raw = np.stack([src.read(band) for band in range(1, src.count + 1)], axis=0)
+            else:
+                img_raw = np.array(img_raw)
+            print(image_path)
+            print(img_raw.shape)
+
+        if master_image is None:
+            master_image = img_raw
+        else:
+            master_image = np.concatenate((master_image, img_raw), axis=0)
+    
+    return master_image
+
+master_image = convert_to_numpy(image_paths)
+
 # Randomly sample patches
-random_all_patches = random_sample_patches(image_paths, square_size, num_patches=16)
+#random_all_patches = random_sample_patches(image_paths, square_size, num_patches=16)
 
 # Display randomly sampled patches
-visualize_patches(random_all_patches)
+#visualize_patches(random_all_patches)
 
 # create a model for classification
 # outputs an image with the same dimensions as the input image
@@ -127,6 +156,8 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(10, activation='softmax')
 ])
+
+
 
 # Compile the model
 model.compile(optimizer='adam',
