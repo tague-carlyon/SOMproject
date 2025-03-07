@@ -42,7 +42,7 @@ def normalize_image(img):
     
     return img
 
-def random_sample_patches(image_paths, square_size=256, num_patches=16):
+def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     """
     Randomly sample patches from multiple images using TensorFlow.
     
@@ -85,8 +85,8 @@ def random_sample_patches(image_paths, square_size=256, num_patches=16):
         all_patches.append(np.concatenate(patches, axis=-1))
         #np.concatenate((all_patches, np.expand_dims(np.concatenate(patches, axis=-1), axis=0)), axis=0) if all_patches.size else np.expand_dims(np.concatenate(patches, axis=-1), axis=0)
     
-
-    print(f"all_patches shape: {all_patches[0].shape}")
+    all_patches = np.array(all_patches)
+    print(f"all_patches shape: {all_patches.shape}")
     return all_patches
 
 def visualize_patches(patches):
