@@ -6,14 +6,14 @@ import dataGathandMan
 
 
 # Get all image paths in the folder
-folder_path = "/home/tague/classes/aiclass/RawData/"
+folder_path = "/home/tcarlyon/classes/aiclass/RawData/"
 image_paths = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.tiff')]
 square_size = 256
 
 #imgs = dataGathandMan.stack_images(image_paths)
 
 # Randomly sample patches
-random_all_patches = dataGathandMan.random_sample_patches(image_paths, square_size)
+images = dataGathandMan.get_images(image_paths)
 
 # Display randomly sampled patches
 #visualize_patches(random_all_patches)

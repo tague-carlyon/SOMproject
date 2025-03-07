@@ -4,20 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-def stack_images(image_paths):
-    """
-    Stack multiple images into a single NumPy array using Rasterio.
-    
-    Args:
-        image_paths: List of paths to the input images
-    
-    Returns:
-        Stacked images as a NumPy array
-    """
-
-    # Convert list of images to a numpy array and stack along the last axis
-    imgs = np.concatenate(imgs, axis=-1)
-    return imgs
 
 def normalize_image(img):
     """
@@ -42,7 +28,31 @@ def normalize_image(img):
     
     return img
 
-def random_sample_patches(image_paths, square_size=256, num_patches=16):
+def get_images(image_paths):
+    
+    imgs = []
+    for image_path in image_paths:
+        # Open the image using rasterio
+        with rio.open(image_path) as src:
+            img_raw = src.read()  # Read all bands
+            if src.count > 1:
+                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+            else:
+                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
+            
+            imgs.append(img_raw)
+
+    
+    imgs = np.concatenate(imgs, axis=-1)
+
+    imgs = np.array(imgs)
+
+    print(f"imgs shape: {imgs.shape}")
+
+    return imgs
+    
+
+def random_sample_patches(imgs=[], image_paths='', square_size=256, num_patches=16):
     """
     Randomly sample patches from multiple images using TensorFlow.
     
@@ -56,17 +66,6 @@ def random_sample_patches(image_paths, square_size=256, num_patches=16):
     """
 
  
-    imgs = []
-    for image_path in image_paths:
-        # Open the image using rasterio
-        with rio.open(image_path) as src:
-            img_raw = src.read()  # Read all bands
-            if src.count > 1:
-                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
-            else:
-                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
-            
-            imgs.append(img_raw)
 
     # Generate a random starting point for cropping
     img_height, img_width = imgs[0].shape[:2]
