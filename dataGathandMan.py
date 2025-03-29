@@ -1,4 +1,3 @@
-from rasterio.stack import stack
 import rasterio as rio
 import numpy as np
 import matplotlib.pyplot as plt
