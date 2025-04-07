@@ -62,9 +62,11 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
             img_raw = src.read()  # Read all bands
             if src.count > 1:
                 img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+                print(f"Image {image_path} has {src.count} bands")
+                print(f"Image {image_path} first three data values: {img_raw[0, 0]}")
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
-            
+
             imgs.append(img_raw)
 
     # Generate a random starting point for cropping
