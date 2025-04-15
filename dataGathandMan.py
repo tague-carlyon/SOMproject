@@ -18,28 +18,6 @@ def stack_images(image_paths):
     imgs = np.concatenate(imgs, axis=-1)
     return imgs
 
-def normalize_image(img):
-    """
-    Normalize the image to have pixel values between -1 and 1 using Keras.
-    
-    Args:
-        img: Input image as a NumPy array
-    
-    Returns:
-        Normalized image as a NumPy array
-    """
-    img = img.astype(np.float32)
-
-    # Maximum absolute height value in the dataset 
-    # "Challenger Deep" in the Mariana Trench
-    max_abs_data = 11000
-
-    # Scale the image to be between -1 and 1
-    # zero remains zero
-
-    img = img / max_abs_data
-    
-    return img
 
 def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     """
@@ -62,9 +40,13 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
             img_raw = src.read()  # Read all bands
             if src.count > 1:
                 img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+                if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
+                    img_raw = img_raw / 255.0 # Normalize to [0, 1]
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
-            
+                if (image_path.endswith('Height.tiff')):
+                    # Normalize to maximum depth at marianous trench
+                    img_raw = img_raw / 11000.0 
             imgs.append(img_raw)
 
     # Generate a random starting point for cropping
