@@ -44,9 +44,8 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
                     img_raw = img_raw / 255.0 # Normalize to [0, 1]
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
-                if (image_path.endswith('Height.tiff')):
-                    # Normalize to maximum depth at marianous trench
-                    img_raw = img_raw / 11000.0 
+                img_raw = img_raw / 11000.0
+            
             imgs.append(img_raw)
 
     # Generate a random starting point for cropping
