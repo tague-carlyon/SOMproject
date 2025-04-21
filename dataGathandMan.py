@@ -1,7 +1,6 @@
 import rasterio as rio
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 
 def stack_images(image_paths):
     """
