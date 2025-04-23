@@ -54,6 +54,32 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     print(f"all_patches shape: {all_patches.shape}")
     return all_patches
 
+def load_image(image_paths):
+    """
+    Load an image using rasterio and normalize it.
+    
+    Args:
+        image_path: Path to the input image
+    """
+
+    imgs = []
+    for image_path in image_paths:
+        # Open the image using rasterio
+        with rio.open(image_path) as src:
+            img_raw = src.read()  # Read all bands
+            if src.count > 1:
+                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+                if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
+                    img_raw = img_raw / 255.0 # Normalize to [0, 1]
+            else:
+                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
+                img_raw = img_raw / 11000.0
+            
+            imgs.append(img_raw)
+    imgs = np.concatenate(imgs, axis=-1)  # Concatenate all images along the last axis
+    print(f"all_patches shape: {imgs.shape}")
+    return imgs
+
 def visualize_patches(patches):
     """
     Visualize the split patches with a colorbar legend.
