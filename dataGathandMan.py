@@ -54,7 +54,7 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     print(f"all_patches shape: {all_patches.shape}")
     return all_patches
 
-def load_image(image_paths):
+def load_images(image_paths):
     """
     Load an image using rasterio and normalize it.
     
