@@ -1,58 +1,10 @@
-from rasterio.stack import stack
 import rasterio as rio
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 
 
-def normalize_image(img):
-    """
-    Normalize the image to have pixel values between -1 and 1 using Keras.
-    
-    Args:
-        img: Input image as a NumPy array
-    
-    Returns:
-        Normalized image as a NumPy array
-    """
-    img = img.astype(np.float32)
 
-    # Maximum absolute height value in the dataset 
-    # "Challenger Deep" in the Mariana Trench
-    max_abs_data = 11000
-
-    # Scale the image to be between -1 and 1
-    # zero remains zero
-
-    img = img / max_abs_data
-    
-    return img
-
-def get_images(image_paths):
-    
-    imgs = []
-    for image_path in image_paths:
-        # Open the image using rasterio
-        with rio.open(image_path) as src:
-            img_raw = src.read()  # Read all bands
-            if src.count > 1:
-                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
-            else:
-                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
-            
-            imgs.append(img_raw)
-
-    
-    imgs = np.concatenate(imgs, axis=-1)
-
-    imgs = np.array(imgs)
-
-    print(f"imgs shape: {imgs.shape}")
-
-    return imgs
-    
-
-def random_sample_patches(imgs=[], image_paths='', square_size=256, num_patches=16):
+def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     """
     Randomly sample patches from multiple images using TensorFlow.
     
@@ -66,6 +18,20 @@ def random_sample_patches(imgs=[], image_paths='', square_size=256, num_patches=
     """
 
  
+    imgs = []
+    for image_path in image_paths:
+        # Open the image using rasterio
+        with rio.open(image_path) as src:
+            img_raw = src.read()  # Read all bands
+            if src.count > 1:
+                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+                if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
+                    img_raw = img_raw / 255.0 # Normalize to [0, 1]
+            else:
+                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
+                img_raw = img_raw / 11000.0
+            
+            imgs.append(img_raw)
 
     # Generate a random starting point for cropping
     img_height, img_width = imgs[0].shape[:2]
@@ -84,8 +50,8 @@ def random_sample_patches(imgs=[], image_paths='', square_size=256, num_patches=
         all_patches.append(np.concatenate(patches, axis=-1))
         #np.concatenate((all_patches, np.expand_dims(np.concatenate(patches, axis=-1), axis=0)), axis=0) if all_patches.size else np.expand_dims(np.concatenate(patches, axis=-1), axis=0)
     
-
-    print(f"all_patches shape: {all_patches[0].shape}")
+    all_patches = np.array(all_patches)
+    print(f"all_patches shape: {all_patches.shape}")
     return all_patches
 
 def visualize_patches(patches):
