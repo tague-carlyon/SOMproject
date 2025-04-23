@@ -20,6 +20,7 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
  
     imgs = []
     for image_path in image_paths:
+        print(f"Processing image: {image_path}")
         # Open the image using rasterio
         with rio.open(image_path) as src:
             img_raw = src.read()  # Read all bands
@@ -30,6 +31,14 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
                 img_raw = img_raw / 11000.0
+                if image_path.endswith('Height.tiff'):
+                    # Calculate the two-point central slope in x and y directions
+                    slope_x = np.gradient(img_raw[:, :, 0], axis=1)  # Gradient along x-axis
+                    slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
+                    slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
+                    slope = np.expand_dims(slope, axis=-1)  # Add a new axis to make it 3D
+                    print(f"Image shape: {img_raw.shape}, Slope shape: {slope.shape}")
+                    imgs.append(slope)
             
             imgs.append(img_raw)
 
@@ -62,8 +71,9 @@ def load_images(image_paths):
         image_path: Path to the input image
     """
 
-    imgs = []
+    imgs = np.array([])
     for image_path in image_paths:
+        print(f"Processing image: {image_path}")
         # Open the image using rasterio
         with rio.open(image_path) as src:
             img_raw = src.read()  # Read all bands
@@ -79,12 +89,16 @@ def load_images(image_paths):
                     slope_x = np.gradient(img_raw[:, :, 0], axis=1)  # Gradient along x-axis
                     slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
                     slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
-                    imgs.append(slope)
-
+                    slope = np.expand_dims(slope, axis=-1)  # Add a new axis to make it 3D
+                    print(f"Image shape: {img_raw.shape}, Slope shape: {slope.shape}")
+                    imgs = np.concatenate((imgs, slope), axis=-1)
             
-            imgs.append(img_raw)
-    imgs = np.concatenate(imgs, axis=-1)  # Concatenate all images along the last axis
-    print(f"all_patches shape: {imgs.shape}")
+            if imgs.size == 0:
+                imgs = img_raw
+            else:
+                imgs = np.concatenate((imgs, img_raw), axis=-1)
+    #imgs = np.concatenate(imgs, axis=-1)  # Convert list to NumPy array and concatenate along the last axis
+    #print(f"all_patches shape: {imgs.shape}")
     return imgs
 
 def visualize_patches(patches):
