@@ -71,9 +71,16 @@ def load_images(image_paths):
                 img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
                 if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
                     img_raw = img_raw / 255.0 # Normalize to [0, 1]
-            else:
+            else:                    
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
                 img_raw = img_raw / 11000.0
+                if image_path.endswith('Height.tiff'):
+                    # Calculate the two-point central slope in x and y directions
+                    slope_x = np.gradient(img_raw[:, :, 0], axis=1)  # Gradient along x-axis
+                    slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
+                    slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
+                    imgs.append(slope)
+
             
             imgs.append(img_raw)
     imgs = np.concatenate(imgs, axis=-1)  # Concatenate all images along the last axis
