@@ -28,6 +28,8 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
                 img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
                 if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
                     img_raw = img_raw / 255.0 # Normalize to [0, 1]
+                if (image_path.endswith('TreeCover.tiff')):
+                    img_raw = np.mean(img_raw, axis=-1, keepdims=True) / 255.0  # Convert to greyscale by averaging across channels
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
                 img_raw = img_raw / 11000.0
@@ -37,7 +39,6 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
                     slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
                     slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
                     slope = np.expand_dims(slope, axis=-1)  # Add a new axis to make it 3D
-                    print(f"Image shape: {img_raw.shape}, Slope shape: {slope.shape}")
                     imgs.append(slope)
             
             imgs.append(img_raw)
