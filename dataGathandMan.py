@@ -30,6 +30,9 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
                     img_raw = img_raw / 255.0 # Normalize to [0, 1]
                 if (image_path.endswith('TreeCover.tiff')):
                     img_raw = np.mean(img_raw, axis=-1, keepdims=True) / 255.0  # Convert to greyscale by averaging across channels
+                    img_raw = img_raw / np.max(img_raw)  # Scale to between 0 and 1
+                if image_path.endswith('FracImp.tiff'):
+                    img_raw = img_raw / np.max(img_raw)  # Scale to between 0 and 1
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
                 img_raw = img_raw / 11000.0
