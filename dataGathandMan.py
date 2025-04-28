@@ -2,20 +2,6 @@ import rasterio as rio
 import numpy as np
 import matplotlib.pyplot as plt
 
-def stack_images(image_paths):
-    """
-    Stack multiple images into a single NumPy array using Rasterio.
-    
-    Args:
-        image_paths: List of paths to the input images
-    
-    Returns:
-        Stacked images as a NumPy array
-    """
-
-    # Convert list of images to a numpy array and stack along the last axis
-    imgs = np.concatenate(imgs, axis=-1)
-    return imgs
 
 
 def random_sample_patches(image_paths, square_size=256, num_patches=2048):
@@ -34,6 +20,7 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
  
     imgs = []
     for image_path in image_paths:
+        print(f"Processing image: {image_path}")
         # Open the image using rasterio
         with rio.open(image_path) as src:
             img_raw = src.read()  # Read all bands
@@ -41,9 +28,21 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
                 img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
                 if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
                     img_raw = img_raw / 255.0 # Normalize to [0, 1]
+                if (image_path.endswith('TreeCover.tiff')):
+                    img_raw = np.mean(img_raw, axis=-1, keepdims=True) / 255.0  # Convert to greyscale by averaging across channels
+                    img_raw = img_raw / np.max(img_raw)  # Scale to between 0 and 1
+                if image_path.endswith('FracImp.tiff'):
+                    img_raw = img_raw / np.max(img_raw)  # Scale to between 0 and 1
             else:
                 img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
                 img_raw = img_raw / 11000.0
+                if image_path.endswith('Height.tiff'):
+                    # Calculate the two-point central slope in x and y directions
+                    slope_x = np.gradient(img_raw[:, :, 0], axis=1)  # Gradient along x-axis
+                    slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
+                    slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
+                    slope = np.expand_dims(slope, axis=-1)  # Add a new axis to make it 3D
+                    imgs.append(slope)
             
             imgs.append(img_raw)
 
@@ -67,6 +66,44 @@ def random_sample_patches(image_paths, square_size=256, num_patches=2048):
     all_patches = np.array(all_patches)
     print(f"all_patches shape: {all_patches.shape}")
     return all_patches
+
+def load_images(image_paths):
+    """
+    Load an image using rasterio and normalize it.
+    
+    Args:
+        image_path: Path to the input image
+    """
+
+    imgs = np.array([])
+    for image_path in image_paths:
+        print(f"Processing image: {image_path}")
+        # Open the image using rasterio
+        with rio.open(image_path) as src:
+            img_raw = src.read()  # Read all bands
+            if src.count > 1:
+                img_raw = np.transpose(np.stack([src.read(band) for band in range(1, src.count)], axis=0), (1, 2, 0))
+                if (image_path.endswith('Visible.tiff') or image_path.endswith('IR.tiff')):
+                    img_raw = img_raw / 255.0 # Normalize to [0, 1]
+            else:                    
+                img_raw = np.transpose(np.array(img_raw), (1, 2, 0))
+                img_raw = img_raw / 11000.0
+                if image_path.endswith('Height.tiff'):
+                    # Calculate the two-point central slope in x and y directions
+                    slope_x = np.gradient(img_raw[:, :, 0], axis=1)  # Gradient along x-axis
+                    slope_y = np.gradient(img_raw[:, :, 0], axis=0)  # Gradient along y-axis
+                    slope = np.sqrt(slope_x**2 + slope_y**2)  # Combine gradients to get slope magnitude
+                    slope = np.expand_dims(slope, axis=-1)  # Add a new axis to make it 3D
+                    print(f"Image shape: {img_raw.shape}, Slope shape: {slope.shape}")
+                    imgs = np.concatenate((imgs, slope), axis=-1)
+            
+            if imgs.size == 0:
+                imgs = img_raw
+            else:
+                imgs = np.concatenate((imgs, img_raw), axis=-1)
+    #imgs = np.concatenate(imgs, axis=-1)  # Convert list to NumPy array and concatenate along the last axis
+    #print(f"all_patches shape: {imgs.shape}")
+    return imgs
 
 def visualize_patches(patches):
     """
